@@ -6,17 +6,19 @@ using System.Text;
 using System.Text.Json.Serialization;
 using TodoAPI.Context;
 using TodoAPI.DTOs;
+using TodoAPI.Repository.Categoria;
 using TodoAPI.Repository.GenericRepo;
 using TodoAPI.Repository.item;
 using TodoAPI.Repository.Itens;
+using TodoAPI.Repository.ListaRepo;
 using TodoAPI.Repository.UnityOfWork;
 using TodoAPI.Repository.UserRepo;
 using TodoAPI.Services;
+using TodoAPI.Utils.CustomMiddleware;
+using TodoAPI.Utils.ErrorResponses;
 using TodoAPI.Utils.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
-
-// Add services to the container.
 
 builder.Services.AddControllers(options =>
     {
@@ -26,7 +28,7 @@ builder.Services.AddControllers(options =>
     {
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
     });
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -57,6 +59,8 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
+
+builder.Services.AddHttpContextAccessor();
 
 var secretKey = builder.Configuration["JWT:SecretKey"] ?? throw new ArgumentException("Invalid secret Key");
 
@@ -92,18 +96,21 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IListaRepository, ListaRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IGenericErrorHandler, GenericErrorHandler>();
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseMiddleware<CustomAuthorizationMiddleware>();
 
 app.UseHttpsRedirection();
 

@@ -1,5 +1,9 @@
-﻿namespace TodoAPI.Repository.ListaRepo;
+﻿using TodoAPI.Model;
+using TodoAPI.Repository.GenericRepo;
 
-public interface IListaRepository
+namespace TodoAPI.Repository.ListaRepo;
+
+public interface IListaRepository : IGenericRepository<Lista>
 {
+
 }

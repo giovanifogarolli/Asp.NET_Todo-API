@@ -11,6 +11,7 @@ using TodoAPI.Model;
 using TodoAPI.Repository.item;
 using TodoAPI.Repository.Itens;
 using TodoAPI.Repository.UnityOfWork;
+using TodoAPI.Utils.ErrorResponses;
 using TodoAPI.Utils.Pagination;
 
 namespace TodoAPI.Controller;
@@ -22,28 +23,19 @@ public class ItensController : ControllerBase
 
     private readonly IUnitOfWork _uof;
     private readonly IMapper _mapper;
+    private readonly IGenericErrorHandler _errorHandler;
 
-    public ItensController(IUnitOfWork unitOfWork, IMapper mapper)
+    public ItensController(IUnitOfWork unitOfWork, IMapper mapper, IGenericErrorHandler errorHandler)
     {
         _uof = unitOfWork;
         _mapper = mapper;
+        _errorHandler = errorHandler;
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Item>>> GetAll()
-    {
-        IEnumerable<Item> itens = await _uof.ItemRepository.GetAll();
-
-        IEnumerable<GetItemResponseDTO> itensDTO = _mapper.Map<IEnumerable<GetItemResponseDTO>>(itens);
-
-        return Ok(new { success = true, quantity = itensDTO.Count(), data = itensDTO });
-    }
-
-    [HttpGet("pagination")]
     [Authorize]
     public async Task<ActionResult<IEnumerable<Item>>> GetItens([FromQuery] QueryParameters itensParameters)
     {
-
         int.TryParse(User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value, out int userId);
 
         PagedList<Item> itens = await _uof.ItemRepository.GetItens(itensParameters, userId);
@@ -62,49 +54,41 @@ public class ItensController : ControllerBase
 
         IEnumerable<GetItemResponseDTO> itensDTO = _mapper.Map<IEnumerable<GetItemResponseDTO>>(itens);
 
-        return Ok(new { success = true, data = itensDTO });
+        return Ok(new {quantity = itens.Count() , data = itensDTO });
     }
 
     [HttpGet("categoria/{categoria:int}")]
+    [Authorize]
     public async Task<ActionResult<IQueryable<Item>>> GetItensPorCategoria(int categoria, [FromQuery] QueryParameters itensParameters)
     {
         int.TryParse(User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value, out int userId);
 
         PagedList<Item> itens = await _uof.ItemRepository.GetItemPorCategoria(categoria, userId, itensParameters);
 
-        if(itens is null || !itens.Any())
-        {
-            return NotFound("Categoria vazia ou não existente");
-        }
+        if (!itens.Any()) return _errorHandler.ResourceNotFound($"Categoria ID = {categoria} não existe.");
 
         IEnumerable<GetItemResponseDTO> itensDTO = _mapper.Map<IEnumerable<GetItemResponseDTO>>(itens);
 
-        return Ok(itensDTO);
+        return Ok(new { quantity = itensDTO.Count(), data = itensDTO });
     }
 
     [HttpGet("{id:int}", Name = "ObterItem")]
+    [Authorize]
     public async Task<ActionResult> GetItem(int id)
     {
-        Item item = await _uof.ItemRepository.Get(i=> i.itemId == id);
+        Item? item = await _uof.ItemRepository.Get(i=> i.itemId == id);
 
-        if(item is null)
-        {
-            return NotFound(new { error = "Não existe item cadastrado" });
-        }
+        if (item == null) _errorHandler.ResourceNotFound(detail: $"Não existe item com o ID = {id}, informe um ID valido.");
 
         GetItemResponseDTO itemDTO = _mapper.Map<GetItemResponseDTO>(item);
 
-        return Ok(new { success = true, data = itemDTO });
+        return Ok(new {data = itemDTO });
     }
 
     [HttpPost]
+    [Authorize]
     public async Task<ActionResult> PostItem(CreateItemRequestDTO itemDTO)
     {
-        if(itemDTO is null)
-        {
-            return BadRequest("Dados inválidos");
-        }
-
         Item item = _mapper.Map<Item>(itemDTO);
 
         item.dataInicio = DateTime.Now;
@@ -117,14 +101,13 @@ public class ItensController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize]
     public async Task<ActionResult> DeleteItem(int id)
     {
 
-        Item item = await _uof.ItemRepository.Get(i => i.itemId == id);
+        Item? item = await _uof.ItemRepository.Get(i => i.itemId == id);
 
-        if (item == null) {
-            return NotFound("Item não existe");
-        }
+        if (item == null) return _errorHandler.ResourceNotFound(detail: $"Não existe item com o ID = {id}, informe um ID valido.");
 
         _uof.ItemRepository.Delete(item);
 
@@ -134,12 +117,12 @@ public class ItensController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
+    [Authorize]
     public async Task<ActionResult> UpdateItem(int id, Item item)
     {
-        Item UpdatedItem = await _uof.ItemRepository.Get(i => i.itemId == id);
+        Item? UpdatedItem = await _uof.ItemRepository.Get(i => i.itemId == id);
 
-        if (UpdatedItem == null)
-            return NotFound("Item não existe");
+        if (item == null) return _errorHandler.ResourceNotFound(detail: $"Não existe item com o ID = {id}, informe um ID valido.");
 
         _uof.ItemRepository.Update(item);
 
@@ -149,12 +132,12 @@ public class ItensController : ControllerBase
     }
 
     [HttpPatch("concluir/{id:int}")]
+    [Authorize]
     public async Task<ActionResult> ConcludeItem(int id)
     {
-        Item item = await _uof.ItemRepository.Get(i => i.itemId == id);
+        Item? item = await _uof.ItemRepository.Get(i => i.itemId == id);
 
-        if (item == null)
-            return NotFound("Item não existe");
+        if (item == null) return _errorHandler.ResourceNotFound(detail: $"Não existe item com o ID = {id}, informe um ID valido.");
 
         item.status = true;
         item.dataFim = DateTime.Now;
