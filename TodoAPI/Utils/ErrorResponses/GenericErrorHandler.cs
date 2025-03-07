@@ -27,43 +27,27 @@ public class GenericErrorHandler : IGenericErrorHandler
     public ActionResult AlreadyExist(string? detail, List<ErrorDetail>? errors = null)
     {
 
-        ProblemDetails pd = new()
-        {
-            Type = "https://problems-registry.smartbear.com/already-exists/",
-            Title = "Já existe.",
-            Detail = "O recurso que está sendo criado já existe.",
-            Status = 409,
-        };
-
-        pd.Extensions.Add("Code", "409-01");
-        pd.Extensions["traceId"] = HttpContext?.TraceIdentifier;
-
         if (!string.IsNullOrEmpty(detail))
         {
             errors ??= new List<ErrorDetail>();
             errors.Add(new ErrorDetail { Detail = detail });
         }
 
-        if (errors != null && errors.Count > 0)
-        {
-            pd.Extensions.Add("errors", errors);
-        }
-
-        return new ObjectResult(pd) { StatusCode = StatusCodes.Status409Conflict };
+        throw new ApiException(
+            statusCode: 409,
+            type: "https://problems-registry.smartbear.com/already-exists/",
+            title: "Já existe.",
+            detail: "O recurso que está sendo criado já existe.",
+            code: "409-01",
+            traceId: HttpContext?.TraceIdentifier,
+            errors: errors
+        );
     }
+
+
 
     public ActionResult BadRequest(string? detail = null, List<ErrorDetail>? errors = null)
     {
-        ProblemDetails pd = new()
-        {
-            Type = "https://problems-registry.smartbear.com/invalid-body-property-format/",
-            Title = "Corpo de requisição inválido",
-            Detail = "Corpo de requisição está mal formatado.",
-            Status = 400,
-        };
-
-        pd.Extensions.Add("Code", "400-04");
-        pd.Extensions["traceId"] = HttpContext?.TraceIdentifier;
 
         if (!string.IsNullOrEmpty(detail))
         {
@@ -71,65 +55,52 @@ public class GenericErrorHandler : IGenericErrorHandler
             errors.Add(new ErrorDetail { Detail = detail });
         }
 
-        if (errors != null && errors.Count > 0)
-        {
-            pd.Extensions.Add("errors", errors);
-        }
-
-        return new ObjectResult(pd) { StatusCode = StatusCodes.Status400BadRequest};
+        throw new ApiException(
+            statusCode: 400,
+            type: "https://problems-registry.smartbear.com/invalid-body-property-format/",
+            title: "Corpo de requisição inválido",
+            detail: "Corpo de requisição está mal formatado.",
+            code: "400-04",
+            traceId: HttpContext?.TraceIdentifier,
+            errors: errors
+        );
     }
 
     public ActionResult MissingParameter(string? detail, List<ErrorDetail>? errors = null)
     {
-        ProblemDetails pd = new()
-        {
-            Type = "https://problems-registry.smartbear.com/missing-request-parameter/",
-            Title = "Parametro de requisição inválido.",
-            Detail = "Parametro da requisição está mal formatado.",
-            Status = 400,
-        };
-
-        pd.Extensions.Add("Code", "400-03");
-        pd.Extensions["traceId"] = HttpContext?.TraceIdentifier;
-
         if (!string.IsNullOrEmpty(detail))
         {
             errors ??= new List<ErrorDetail>();
             errors.Add(new ErrorDetail { Detail = detail });
         }
 
-        if (errors != null && errors.Count > 0)
-        {
-            pd.Extensions.Add("errors", errors);
-        }
-
-        return new ObjectResult(pd) { StatusCode = StatusCodes.Status400BadRequest };
+        throw new ApiException(
+            statusCode: 400,
+            type: "https://problems-registry.smartbear.com/missing-request-parameter/",
+            title: "Parâmetro de requisição inválido.",
+            detail: "Parâmetro da requisição está mal formatado.",
+            code: "400-03",
+            traceId: HttpContext?.TraceIdentifier,
+            errors: errors
+        );
     }
 
     public ActionResult ResourceNotFound(string? detail, List<ErrorDetail>? errors = null)
     {
-        ProblemDetails pd = new()
-        {
-            Type = "https://problems-registry.smartbear.com/not-found/",
-            Title = "Não encontrado.",
-            Detail = "O recurso especificado não foi encontrado.",
-            Status = 404,
-        };
-
-        pd.Extensions.Add("Code", "404-1");
-        pd.Extensions["traceId"] = HttpContext?.TraceIdentifier;
-
         if (!string.IsNullOrEmpty(detail))
         {
             errors ??= new List<ErrorDetail>();
             errors.Add(new ErrorDetail { Detail = detail });
         }
 
-        if (errors != null && errors.Count > 0)
-        {
-            pd.Extensions.Add("errors", errors);
-        }
-
-        return new ObjectResult(pd) { StatusCode = StatusCodes.Status404NotFound };
+        throw new ApiException(
+            statusCode: 404,
+            type: "https://problems-registry.smartbear.com/not-found/",
+            title: "Não encontrado.",
+            detail: "O recurso especificado não foi encontrado.",
+            code: "404-01",
+            traceId: HttpContext?.TraceIdentifier,
+            errors: errors
+        );
     }
 }

@@ -49,7 +49,7 @@ public class ItemRepository : GenericRepository<Item>, IItemRepository
     {
         IEnumerable<Item> itens = await GetAll(id);
 
-        var itensOrdenados = itens.OrderBy(on => on.titulo).AsQueryable();
+        IQueryable<Item> itensOrdenados = itens.OrderBy(on => on.titulo).AsQueryable();
 
         return PagedList<Item>.toPagedList(itensOrdenados, itensParameters.PageNumber, itensParameters.Pagesize);
     }

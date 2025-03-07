@@ -16,14 +16,10 @@ using TodoAPI.Repository.UserRepo;
 using TodoAPI.Services;
 using TodoAPI.Utils.CustomMiddleware;
 using TodoAPI.Utils.ErrorResponses;
-using TodoAPI.Utils.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers(options =>
-    {
-        options.Filters.Add(typeof(ApiExceptionFilter));
-    })
+builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
@@ -94,12 +90,14 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     .LogTo(Console.WriteLine, LogLevel.Information));
 
 builder.Services.AddAutoMapper(typeof(MappingProfile));
+
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IListaRepository, ListaRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IGenericErrorHandler, GenericErrorHandler>();
+builder.Services.AddScoped<IListaService, ListaService>();
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 
 var app = builder.Build();
@@ -111,6 +109,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseMiddleware<CustomAuthorizationMiddleware>();
+app.UseMiddleware<ExceptionHandlerMiddleware>();
 
 app.UseHttpsRedirection();
 

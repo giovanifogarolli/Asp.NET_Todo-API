@@ -65,7 +65,7 @@ public class ItensController : ControllerBase
 
         PagedList<Item> itens = await _uof.ItemRepository.GetItemPorCategoria(categoria, userId, itensParameters);
 
-        if (!itens.Any()) return _errorHandler.ResourceNotFound($"Categoria ID = {categoria} não existe.");
+        if (!itens.Any()) _errorHandler.ResourceNotFound($"Categoria ID = {categoria} não existe.");
 
         IEnumerable<GetItemResponseDTO> itensDTO = _mapper.Map<IEnumerable<GetItemResponseDTO>>(itens);
 
@@ -94,6 +94,10 @@ public class ItensController : ControllerBase
         item.dataInicio = DateTime.Now;
         item.status = false;
 
+        Lista? lista = await _uof.ListaRepository.Get(l => l.listaId == item.listaId);
+
+        if (lista is null) _errorHandler.BadRequest($"Lista com id = {item.listaId} não pode ser encontrada.");
+
         Item CreatedItem = _uof.ItemRepository.Create(item);
         await _uof.CommitAsync();
 
@@ -107,7 +111,7 @@ public class ItensController : ControllerBase
 
         Item? item = await _uof.ItemRepository.Get(i => i.itemId == id);
 
-        if (item == null) return _errorHandler.ResourceNotFound(detail: $"Não existe item com o ID = {id}, informe um ID valido.");
+        if (item == null) _errorHandler.ResourceNotFound(detail: $"Não existe item com o ID = {id}, informe um ID valido.");
 
         _uof.ItemRepository.Delete(item);
 
@@ -122,7 +126,7 @@ public class ItensController : ControllerBase
     {
         Item? UpdatedItem = await _uof.ItemRepository.Get(i => i.itemId == id);
 
-        if (item == null) return _errorHandler.ResourceNotFound(detail: $"Não existe item com o ID = {id}, informe um ID valido.");
+        if (item == null) _errorHandler.ResourceNotFound(detail: $"Não existe item com o ID = {id}, informe um ID valido.");
 
         _uof.ItemRepository.Update(item);
 
@@ -137,7 +141,7 @@ public class ItensController : ControllerBase
     {
         Item? item = await _uof.ItemRepository.Get(i => i.itemId == id);
 
-        if (item == null) return _errorHandler.ResourceNotFound(detail: $"Não existe item com o ID = {id}, informe um ID valido.");
+        if (item == null) _errorHandler.ResourceNotFound(detail: $"Não existe item com o ID = {id}, informe um ID valido.");
 
         item.status = true;
         item.dataFim = DateTime.Now;
