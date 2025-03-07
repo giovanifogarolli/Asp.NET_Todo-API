@@ -12,8 +12,15 @@ public class GenericErrorHandler : IGenericErrorHandler
     public class ErrorDetail()
     {
         public string Detail { get; set; } = string.Empty;
-        public string? Pointer { get; set; }
+        public string? Pointer { get; set; } = string.Empty;
+
+        public ErrorDetail(string Detail, string Pointer) : this()
+        {
+            this.Detail = Detail;
+            this.Pointer = Pointer;
+        }
     }
+
 
     private readonly IHttpContextAccessor _httpContextAccessor;
 

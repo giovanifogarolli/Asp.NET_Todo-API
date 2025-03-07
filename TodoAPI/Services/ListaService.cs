@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using FluentValidation;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -10,6 +11,8 @@ using TodoAPI.Repository.ListaRepo;
 using TodoAPI.Repository.UnityOfWork;
 using TodoAPI.Utils.ErrorResponses;
 using TodoAPI.Utils.Pagination;
+using TodoAPI.Utils.Validators;
+using static TodoAPI.Utils.ErrorResponses.GenericErrorHandler;
 
 namespace TodoAPI.Services;
 
@@ -19,6 +22,7 @@ public class ListaService : IListaService
     private readonly IMapper _mapper;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IGenericErrorHandler _errorHandler;
+    private readonly ListaDTOValidator _validator = new();
 
     public ListaService(IUnitOfWork uof, IMapper mapper, IHttpContextAccessor httpContextAccessor, IGenericErrorHandler errorHandler)
     {
@@ -32,6 +36,21 @@ public class ListaService : IListaService
 
     public async Task<GetListaResponseDTO> Create(CreateListaDTO listaDTO)
     {
+
+        var validateResult = _validator.Validate(listaDTO);
+
+
+        if (!validateResult.IsValid)
+        {
+            List<ErrorDetail> errors = new();
+            foreach (var failure in validateResult.Errors)
+            {
+                errors.Add(new ErrorDetail(failure.ErrorMessage, failure.PropertyName));
+            }
+
+            _errorHandler.BadRequest(errors: errors);
+        }
+
         Lista lista = _mapper.Map<Lista>(listaDTO);
 
          int.TryParse(HttpContext?.User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value, out int userId);

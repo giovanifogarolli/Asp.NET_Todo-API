@@ -1,7 +1,9 @@
+using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Text.Json.Serialization;
 using TodoAPI.Context;
@@ -16,6 +18,7 @@ using TodoAPI.Repository.UserRepo;
 using TodoAPI.Services;
 using TodoAPI.Utils.CustomMiddleware;
 using TodoAPI.Utils.ErrorResponses;
+using TodoAPI.Utils.Validators;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -99,6 +102,7 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IGenericErrorHandler, GenericErrorHandler>();
 builder.Services.AddScoped<IListaService, ListaService>();
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
 
 var app = builder.Build();
 
